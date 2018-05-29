@@ -9,23 +9,29 @@
       <transition name="flip" mode="out-in">
         <start-screen
           v-if="state == 'start'"
-          @onStart="onStart"
+          @toChooseLevel="toChooseLevel"
         ></start-screen>
+        <chooseLevel
+          v-else-if="state == 'choose'"
+          :settings="settings[currentSettings.signId]"
+          @onStart="onStart"
+          @toStartScreen="toStartScreen"
+        ></chooseLevel>
         <question v-else-if="state == 'question'"
-          @onSuccess="onQuestionSuccess"
-          @onError="onQuestionError"
-        ></question>
-        <message
-          v-else-if="state == 'message'"
-          :type="message.type"
-          :text="message.text"
+          :sign="settings[currentSettings.signId].sign"
+          :level="currentSettings.level"
+          :settings="settings[currentSettings.signId].levels[currentSettings.level]"
           @onNext="onNext"
-        ></message>
+          @toResultScreen="toResultScreen"
+        ></question>
         <result-screen
           v-else-if="state == 'result'"
-          :stats="stats"
+          :stats="success"
+          :questMax="questMax"
+          :startTime="startTime"
           @repeat="onStart"
           @nextLevel="onNextLevel"
+          @toStartScreen="toStartScreen"
         ></result-screen>
         <div v-else>Неизвестное состояние</div>
       </transition>
@@ -39,54 +45,226 @@ export default {
   data () {
     return {
       state: 'start',
-      stats: {
-        success: 0,
-        error: 0
-      },
+      success: 0,
       message: {
         type: '',
         text: ''
       },
-      questMax: 3
+      startTime: new Date(),
+      questMax: 20,
+      currentSettings: {
+        signId: 0, // плюс
+        level: 0
+      },
+      settings: [
+        { // Плюс
+          sign: '+',
+          levels: [
+            {
+              min: 0,
+              max: 10
+            },
+            {
+              min: 0,
+              max: 15
+            },
+            {
+              min: 1,
+              max: 20
+            },
+            {
+              min: 1,
+              max: 30
+            },
+            {
+              min: 1,
+              max: 40
+            },
+            {
+              min: 1,
+              max: 50
+            },
+            {
+              min: 1,
+              max: 60
+            },
+            {
+              min: 1,
+              max: 70
+            },
+            {
+              min: 1,
+              max: 80
+            },
+      ]
+        },
+        { // Минус
+          sign: '-',
+          levels: [
+            {
+              min: 0,
+              max: 10
+            },
+            {
+              min: 0,
+              max: 15
+            },
+            {
+              min: 0,
+              max: 20
+            },
+            {
+              min: 0,
+              max: 30
+            },
+            {
+              min: 0,
+              max: 40
+            },
+            {
+              min: 0,
+              max: 50
+            },
+            {
+              min: 0,
+              max: 60
+            },
+            {
+              min: 0,
+              max: 70
+            },
+            {
+              min: 0,
+              max: 80
+            },
+             {
+              min: 0,
+              max: 90
+            },
+             {
+              min: 0,
+              max: 100
+            },
+          ]
+         },
+        { // Умножить
+          sign: '*',
+          levels: [
+            {
+              min: 0,
+              max: 10
+            },
+            {
+              min: 0,
+              max: 10
+            },
+            {
+              min: 0,
+              max: 10
+            },
+            {
+              min: 0,
+              max: 10
+            },
+            {
+              min: 0,
+              max: 10
+            },
+            {
+              min: 0,
+              max: 10
+            },
+            {
+              min: 0,
+              max: 10
+            },
+            {
+              min: 0,
+              max: 10
+            },
+          ]
+         },
+        { // Разделить
+          sign: ':',
+          levels: [
+            {
+              min: 1,
+              max: 10
+            },
+            {
+              min: 1,
+              max: 10
+            },
+            {
+              min: 1,
+              max: 10
+            },
+            {
+              min: 1,
+              max: 10
+            },
+            {
+              min: 1,
+              max: 10
+            },
+            {
+              min: 1,
+              max: 10
+            },
+            {
+              min: 1,
+              max: 10
+            },
+            {
+              min: 1,
+              max: 10
+            },
+          ]
+         },
+      ]
     }
   },
   computed: {
-    questDone() {
-      return this.stats.success + this.stats.error;
-    },
     progressStyles() {
       return {
-        width: this.questDone / this.questMax * 100 + '%'
+        width: this.success / this.questMax * 100 + '%'
       }
     }
   },
   methods: {
-    onStart() {
+    onStart(levelId) {
       this.state = 'question';
-      this.stats.success = 0;
-      this.stats.error = 0;
-    },
-    onQuestionSuccess() {
-      this.state = 'message';
-      this.message.text = 'Хорошая работа!';
-      this.message.type = 'success';
-      this.stats.success++;
-    },
-    onQuestionError(msg) {
-      this.state = 'message';
-      this.message.text = msg;
-      this.message.type = 'warning';
-      this.stats.error++;
+      this.success = 0;
+      this.startTime = new Date();
+
+      if (levelId !== undefined) {
+        this.currentSettings.level = levelId;
+      }
     },
     onNext() {
-      if (this.questDone < this.questMax) {
-        this.state = 'question';
-      } else {
+      this.success++;
+      
+      if (this.success == this.questMax) {
         this.state = 'result';
       }
     },
     onNextLevel() {
+      if (this.settings[this.currentSettings.signId].levels[this.currentSettings.level+1] !== undefined) {
+        this.currentSettings.level++;
+      }
 
+      this.success = 0;
+      this.state = 'question';
+    },
+    toStartScreen() {
+      this.state = 'start';
+    },
+    toChooseLevel(signId) {
+      this.state = 'choose';
+      this.currentSettings.signId = signId;
+    },
+    toResultScreen() {
+      this.state = 'result';
     }
   }
 }
@@ -99,10 +277,11 @@ export default {
   @import "../node_modules/bootstrap/scss/alert";
   @import "../node_modules/bootstrap/scss/buttons";
   @import "../node_modules/bootstrap/scss/progress";
+
   .traning {
-    max-width: 700px;
+    width: 300px;
     margin: 0 auto;
-    // /background-color: cyan;  
+    box-sizing: border-box;
   }
 
   .box {
@@ -143,5 +322,26 @@ export default {
     to {
       transform: rotateX(90deg);
     }
+  }
+
+  .buttons {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+  }
+
+  .btn {
+    padding: 20px 30px;
+    margin: 5px;
+      &-esc {
+      padding: {
+        right: 15px;
+        left: 15px;
+      }
+    }
+  }
+
+  h3 {
+    width: calc(100% - 30px);
   }
 </style>

@@ -1,8 +1,17 @@
 <template>
 	<div class="alert alert-secondary">
-		<h3>Начинаем?</h3>
-		<button class="btn btn-success" @click="$emit('onStart')">
-			Старт
+		<h3>Выберите действие</h3>
+		<button class="btn btn-success" @click="$emit('toChooseLevel', 0)">
+			Сложение
+		</button>
+		<button class="btn btn-success" @click="$emit('toChooseLevel', 1)">
+			Вычитание
+		</button>
+		<button class="btn btn-success" @click="$emit('toChooseLevel', 2)">
+			Умножение
+		</button>
+		<button class="btn btn-success" @click="$emit('toChooseLevel', 3)">
+			Деление
 		</button>
 	</div>
 </template>
@@ -17,7 +26,7 @@
 		text-align: center;
 	}
 
-	h3, .btn {
-		margin: 20px 0;
+	.btn {
+		width: calc(100% - 30px);
 	}
 </style>
